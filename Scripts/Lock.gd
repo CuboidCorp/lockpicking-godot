@@ -9,6 +9,14 @@ var CORRECTNESS_DIFFICULTY_SCALING : int = 10
 @export
 var HINT_DIFFICULTY_SCALING : int = 30
 
+@export var rotation_speed: float = -20
+
+signal lock_opened
+
+var max_rot_angle : int = 0
+var lock_rot_speed : int = 20
+
+
 var correct_angle : int
 var correctness_zone : int
 var hint_zone : int
@@ -44,5 +52,12 @@ func _draw():
 		draw_arc(get_child(0).position, 220, deg_to_rad(-90 + -BOBBY_ROTATION_ZONE / 2), deg_to_rad(-90 + BOBBY_ROTATION_ZONE/2), 24, Color(1, 1, 1),2)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta):
+func _process(delta):
+	rotation_degrees = clamp(rotation_degrees + rotation_speed * delta,0,max_rot_angle)
+	if rotation_degrees >=  max_rot_angle && rotation_speed > 0 : 
+		if max_rot_angle == BOBBY_ROTATION_ZONE /2 : 
+			lock_opened.emit()
+		else :
+			get_child(0).damage()
+		
 	pass

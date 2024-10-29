@@ -1,14 +1,14 @@
 extends Sprite2D
 
 @export var lock : Node
-@export var rotation_speed: float = 0.1
-@export var max_health:int = 100
+@export var rotation_speed: float = 0.2
+@export var max_health: int = 100
 
-
-var rotation_limit_left : int 
-var rotation_limit_right : int
+var rotation_limit_left: int
+var rotation_limit_right: int
 var previous_mouse_x: float = 0.0
-var current_health:int
+var current_health: int
+var is_unlocking: bool = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -16,23 +16,25 @@ func _ready():
 	previous_mouse_x = get_viewport().get_mouse_position().x
 	rotation_limit_left = lock.BOBBY_ROTATION_ZONE / -2
 	rotation_limit_right = lock.BOBBY_ROTATION_ZONE / 2
-	pass
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta):
+func _process(delta):
 	if Input.is_action_pressed("Debug"):
 		lock.show_debug()
 	if Input.is_action_pressed("Generate"):
 		lock.generate(1)
+		
+	# Handle unlock action
 	if Input.is_action_pressed("Unlock"):
 		try_unlock()
-	handle_mouse_mouvement()
+	else:
+		lock.rotation_speed = -lock.lock_rot_speed
 	
-		
-	pass
+	# Handle rotation through mouse movement
+	handle_mouse_movement()
 
-func handle_mouse_mouvement():
+func handle_mouse_movement():
 	var current_mouse_x = get_viewport().get_mouse_position().x
 	var mouse_delta = current_mouse_x - previous_mouse_x
 	
@@ -40,20 +42,21 @@ func handle_mouse_mouvement():
 		rotation_degrees = clamp(rotation_degrees + mouse_delta * rotation_speed, rotation_limit_left, rotation_limit_right)
 	
 	previous_mouse_x = current_mouse_x
-	pass
+
+func damage():
+	current_health -=1
+	if (current_health <=0):
+		print("Death")
 
 func try_unlock():
-	print("Try unlock")
-	print("Angle : "+str(rotation_degrees))
-	
-	#Check if current angle is withing the correctness zone
-	if(rotation_degrees > lock.correct_angle - lock.correctness_zone / 2 and rotation_degrees < lock.correct_angle + lock.correctness_zone / 2):
-		print("Success")
-	elif (rotation_degrees > lock.correct_angle - lock.hint_zone / 2 and rotation_degrees < lock.correct_angle + lock.hint_zone / 2) : 
-		print("Almost")
-	else :
-		print("Fail")
-		current_health -=1
-		if(current_health <0):
-			print("BREAK")
-	pass
+	# Check if the current angle is within the correct angle zone
+	if rotation_degrees > lock.correct_angle - lock.correctness_zone / 2 and rotation_degrees < lock.correct_angle + lock.correctness_zone / 2:
+		lock.rotation_speed = lock.lock_rot_speed
+		lock.max_rot_angle = lock.BOBBY_ROTATION_ZONE / 2
+	elif rotation_degrees > lock.correct_angle - lock.hint_zone / 2 and rotation_degrees < lock.correct_angle + lock.hint_zone / 2:
+		lock.rotation_speed = lock.lock_rot_speed
+		lock.max_rot_angle = lock.BOBBY_ROTATION_ZONE / 2 /2
+	else:
+		lock.rotation_speed = -lock.lock_rot_speed
+		lock.max_rot_angle = 0
+
